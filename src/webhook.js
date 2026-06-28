@@ -89,7 +89,16 @@ null;
     0
 
 );
-    if (!transactionId) return res.status(400).json({ ok: false, error: 'missing transaction_id' });
+
+// Callback verification dari AutoGoPay
+if (!transactionId) {
+    log.info("AutoGoPay callback verification");
+
+    return res.status(200).json({
+        success: true,
+        message: "Webhook OK"
+    });
+}
 
     // 3) Find payment by transaction_id (stored in externalRef) — idempotent
     const payment = await Payment.findOne({ externalRef: transactionId, method: 'autogopay' });

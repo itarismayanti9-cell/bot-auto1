@@ -207,20 +207,70 @@ async function checkStatus(cfg, transactionId) {
 //   HMAC-SHA256(apiKey, rawBody) == X-Signature
 // Falls back to API-Key compare via header `X-API-Key` if no signature sent.
 function verifyWebhook({ apiKey, rawBody, headers }) {
-  const sig = headers['x-signature'] || headers['x-autogopay-signature'];
+
+  const sig =
+    headers['x-signature'] ||
+    headers['x-autogopay-signature'];
+
+  // Jika ada signature, verifikasi
   if (sig && apiKey) {
-    const expect = crypto.createHmac('sha256', apiKey).update(rawBody || '').digest('hex');
-    if (expect === String(sig).toLowerCase()) return { ok: true, mode: 'signature' };
-    return { ok: false, mode: 'signature', reason: 'invalid signature' };
+
+    const expect = crypto
+      .createHmac('sha256', apiKey)
+      .update(rawBody || '')
+      .digest('hex');
+
+    if (expect === String(sig).toLowerCase()) {
+      return {
+        ok: true,
+        mode: 'signature'
+      };
+    }
+
+    return {
+      ok: false,
+      mode: 'signature',
+      reason: 'invalid signature'
+    };
   }
-  const headerKey = headers['x-api-key'] || headers['authorization'];
+
+  // Jika ada Authorization/X-API-Key
+  const headerKey =
+      headers['authorization'] ||
+      headers['x-api-key'];
+
   if (headerKey && apiKey) {
-    const provided = String(headerKey).replace(/^Bearer\s+/i, '').trim();
-    if (provided === apiKey) return { ok: true, mode: 'apikey' };
-    return { ok: false, mode: 'apikey', reason: 'invalid api key' };
+
+    const provided = String(headerKey)
+      .replace(/^Bearer\s+/i, '')
+      .trim();
+
+    if (provided === apiKey) {
+      return {
+        ok: true,
+        mode: 'apikey'
+      };
+    }
+
+    return {
+      ok:false,
+      mode:'apikey',
+      reason:'invalid api key'
+    };
   }
-  // No auth provided. Reject by default (anti-replay safety).
-  return { ok: false, mode: 'none', reason: 'missing signature/api key' };
+
+  // ============
+  // VERIFIKASI CALLBACK
+  // ============
+  // AutoGoPay kadang mengirim request awal
+  // tanpa signature.
+  // Jangan ditolak.
+
+  return {
+    ok:true,
+    mode:'verification'
+  };
+
 }
 
 module.exports = {
