@@ -85,15 +85,6 @@ const transactionId =
     payload.order_id ||
     null;
 
-const statusIn = String(
-    data.status ||
-    data.transaction_status ||
-    payload.transaction_status ||
-    payload.status ||
-    payload.payment_status ||
-    ''
-).toLowerCase();
-
 const amountIn = Number(
     data.amount ||
     payload.amount ||
