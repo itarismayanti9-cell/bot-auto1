@@ -47,26 +47,61 @@ log.info(rawBody);
 log.info(headers);
 
 log.info('=======================================');
-    const verify = autogopay.verifyWebhook({ apiKey: cfg.apiKey, rawBody, headers });
-    if (!verify.ok) {
-      log.warn('webhook autogopay verify failed', verify);
-      return res.status(401).json({ ok: false, error: verify.reason || 'unauthorized' });
-    }
 
-    // 2) Extract identifiers
-    const transactionId =
+const verify = autogopay.verifyWebhook({
+    apiKey: cfg.apiKey,
+    rawBody,
+    headers
+});
 
-payload.transaction_id ||
+// Skip verifikasi kalau callback verifikasi awal dari AutoGoPay
+if (!transactionId) {
+    log.info('Webhook verification request');
+    return res.status(200).json({
+        success: true
+    });
+}
 
-payload.reference_id ||
+if (!verify.ok) {
+    log.warn('Webhook signature invalid', verify);
 
-payload.transactionId ||
+    return res.status(401).json({
+        ok:false,
+        error:verify.reason
+    });
+}
 
-payload.invoice ||
+// 2) Extract identifiers
+const data = payload.data || {};
 
-payload.order_id ||
+const transactionId =
+    data.transaction_id ||
+    data.reference_id ||
+    data.invoice ||
+    payload.transaction_id ||
+    payload.reference_id ||
+    payload.transactionId ||
+    payload.invoice ||
+    payload.order_id ||
+    null;
 
-null;
+const statusIn = String(
+    data.status ||
+    data.transaction_status ||
+    payload.transaction_status ||
+    payload.status ||
+    payload.payment_status ||
+    ''
+).toLowerCase();
+
+const amountIn = Number(
+    data.amount ||
+    payload.amount ||
+    payload.total ||
+    payload.total_amount ||
+    0
+);
+
     const statusIn = String(
 
     payload.transaction_status ||

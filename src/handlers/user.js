@@ -384,6 +384,17 @@ async function startAutogopay(ctx, order, method) {
       Markup.inlineKeyboard([[Markup.button.callback('🔄 Pilih Metode Lain', `o:${order.invoice}`)], [backHomeBtn]]));
   }
 
+  // Simpan transaction_id dari AutoGoPay
+if (r.transactionId) {
+    payment.externalRef = r.transactionId;
+    await payment.save();
+
+    order.paymentRef = r.transactionId;
+    await order.save();
+
+    console.log('AutoGoPay Transaction ID:', r.transactionId);
+}
+
   // Render QRIS to PNG (use returned image URL if any, else generate from qrisString)
   let photoSource;
   if (r.qrImageUrl) {
@@ -439,12 +450,20 @@ async function checkAutogopayStatus(ctx, invoice) {
   const cfg = (method && method.config) || {};
   const r = await autogopay.checkStatus(cfg, payment.externalRef || invoice);
   if (!r.ok) { try { await ctx.answerCbQuery('Cek gagal: ' + r.error); } catch {}; return; }
-  const successStates = ['paid','success','completed','settled'];
-  if (successStates.includes(r.status)) {
-    try { await ctx.answerCbQuery('Pembayaran sukses ✅ memproses pengiriman…'); } catch {}
+  const status = String(r.status || '').toLowerCase();
+
+if ([
+    'settlement',
+    'paid',
+    'success',
+    'completed'
+].includes(status)) {
+
     await autogopaySvc.processSuccess(payment, ctx.telegram);
+
     return showOrderDetail(ctx, invoice);
-  }
+}
+
   try { await ctx.answerCbQuery(`Status: ${r.status || 'pending'} ⏳`); } catch {}
 }
 

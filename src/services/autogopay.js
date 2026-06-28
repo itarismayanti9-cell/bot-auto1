@@ -186,7 +186,11 @@ async function checkStatus(cfg, transactionId) {
     orderId:
         d.order_id || null,
 
-   status: paymentStatus,
+status: String(
+    d.transaction_status ||
+    d.status ||
+    ''
+).toLowerCase(),
 
     amount:
         Number(d.amount || 0),
