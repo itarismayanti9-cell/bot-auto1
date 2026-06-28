@@ -93,29 +93,6 @@ const amountIn = Number(
     0
 );
 
-    const statusIn = String(
-
-    payload.transaction_status ||
-
-    payload.status ||
-
-    payload.payment_status ||
-
-    ''
-
-).toLowerCase();
-   const amountIn = Number(
-
-    payload.amount ||
-
-    payload.total ||
-
-    payload.total_amount ||
-
-    0
-
-);
-
 // Callback verification dari AutoGoPay
 if (!transactionId) {
     log.info("AutoGoPay callback verification");
